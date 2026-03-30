@@ -3,6 +3,8 @@ uvicorn[standard]
 pydantic
 pydantic-settings
 python-dotenv
-# gst-python
-# supabase
 requests
+# GStreamer Python bindings
+# Note: gst-python is typically installed via system package manager
+# For macOS: brew install gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav
+# For Ubuntu: apt install gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav python3-gi

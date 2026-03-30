@@ -50,3 +50,33 @@ def delete_video_source(video_source_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="视频源不存在")
     return {"message": "视频源删除成功"}
+
+
+@router.post("/{video_source_id}/start-rtmp")
+def start_mp4_http_to_rtmp_stream(video_source_id: str, rtmp_url: dict):
+    """启动 MP4 HTTP 到 RTMP 的转流"""
+    try:
+        rtmp_url_value = rtmp_url.get("rtmp_url")
+        if not rtmp_url_value:
+            raise HTTPException(status_code=400, detail="缺少 rtmp_url 参数")
+        
+        success = video_source_service.start_mp4_http_to_rtmp_stream(video_source_id, rtmp_url_value)
+        if not success:
+            raise HTTPException(status_code=400, detail="启动转流失败")
+        
+        return {"message": "转流启动成功"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{video_source_id}/stop-rtmp")
+def stop_mp4_http_to_rtmp_stream(video_source_id: str):
+    """停止 MP4 HTTP 到 RTMP 的转流"""
+    try:
+        success = video_source_service.stop_mp4_http_to_rtmp_stream(video_source_id)
+        if not success:
+            raise HTTPException(status_code=400, detail="停止转流失败")
+        
+        return {"message": "转流停止成功"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

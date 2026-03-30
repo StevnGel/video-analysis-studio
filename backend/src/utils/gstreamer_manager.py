@@ -127,6 +127,37 @@ class GStreamerManager:
         except Exception as e:
             print(f"获取管道状态失败: {e}")
             return None
+    
+    def create_mp4_http_to_rtmp_pipeline(self, pipeline_id: str, http_url: str, rtmp_url: str) -> bool:
+        """创建 MP4 HTTP 到 RTMP 的转流管道
+        
+        Args:
+            pipeline_id: 管道 ID
+            http_url: HTTP MP4 文件地址
+            rtmp_url: RTMP 目标地址
+            
+        Returns:
+            bool: 是否创建成功
+        """
+        # 构建 GStreamer 管道描述
+        pipeline_description = f"""
+            souphttpsrc location={http_url} is-live=false ! 
+            decodebin ! 
+            videoconvert ! 
+            x264enc speed-preset=ultrafast tune=zerolatency ! 
+            queue ! 
+            mux. 
+            decodebin. ! 
+            audioconvert ! 
+            lamemp3enc ! 
+            queue ! 
+            mux. 
+            flvmux name=mux ! 
+            rtmpsink location={rtmp_url}
+        """
+        
+        # 调用创建管道方法
+        return self.create_pipeline(pipeline_id, pipeline_description)
 
 
 # 创建 GStreamer 管理器实例
