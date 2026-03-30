@@ -3,6 +3,6 @@ uvicorn[standard]
 pydantic
 pydantic-settings
 python-dotenv
-gst-python
-supabase
+# gst-python
+# supabase
 requests

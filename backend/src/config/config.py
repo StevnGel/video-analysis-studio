@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     
-    # Supabase 配置
-    supabase_url: str
-    supabase_key: str
+    # Supabase 配置 (可选)
+    supabase_url: Optional[str] = ""
+    supabase_key: Optional[str] = ""
     
     # GStreamer 配置
     gst_buffer_size: int = 1024
