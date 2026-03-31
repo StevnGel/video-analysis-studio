@@ -311,7 +311,10 @@ class TaskType(str, Enum):
 
 class TaskStatus(str, Enum):
     PENDING = "pending"       # 待执行
+    PENDING_WITH_INFERENCE = "pending_with_inference"  # 待执行（带推理）
+    QUEUED = "queued"         # 排队中
     RUNNING = "running"       # 运行中
+    PAUSED = "paused"         # 暂停
     COMPLETED = "completed"    # 已完成
     FAILED = "failed"         # 失败
     CANCELLED = "cancelled"   # 已取消
@@ -320,18 +323,56 @@ class AnalysisTask(BaseModel):
     id: str
     name: str                           # 任务名称
     task_type: TaskType                 # 任务类型
-    video_source_id: str                # 视频源ID
-    model_name: str                     # 模型名称
-    video_config: VideoConfig           # 视频格式配置
+    input_config: InputConfig           # 输入配置（包含视频源）
     output_config: OutputConfig         # 输出配置
+    model_config: Optional[ModelConfig] # 模型配置（支持多模型并行）
     status: TaskStatus                  # 任务状态
     progress: float                     # 进度（0-100）
-    gpu_device: str                     # 分配的GPU设备
+    gpu_device: Optional[str]           # 分配的GPU设备
     result_url: Optional[str]           # 结果输出URL
+    priority: int                       # 优先级
     created_at: datetime
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
     error_message: Optional[str]
+
+class InputConfig(BaseModel):
+    source: VideoSource                 # 视频源（本地或在线）
+    resize: Optional[ResizeConfig]     # resize配置
+    roi: Optional[ROIConfig]           # ROI区域
+    skip_frames: Optional[int]          # 跳帧数
+    buffer_size: Optional[int]         # 缓冲区大小
+    decode_threads: Optional[int]       # 解码线程数
+
+class VideoSource(BaseModel):
+    type: Literal["local", "rtsp", "http", "https"]  # 视频源类型
+    id: Optional[str]                  # 本地视频源ID（type=local时必填）
+    url: Optional[str]                 # 在线视频地址
+    auto_download: Optional[bool]      # 是否自动下载为本地MP4
+    timeout: Optional[int]             # 下载超时时间（秒）
+
+class ModelConfig(BaseModel):
+    parallel: bool                      # 是否并行推理，默认True
+    models: List[ModelItem]             # 模型列表
+
+class ModelItem(BaseModel):
+    name: str                           # 模型名称
+    config: Optional[InferenceConfig]  # 推理配置
+    enabled: bool                       # 是否启用
+    for_display: bool                  # 是否用于绘制展示
+    draw_config: Optional[DrawConfig]  # 绘制配置
+
+class DrawConfig(BaseModel):
+    draw_bbox: bool                    # 绘制边界框
+    draw_mask: bool                    # 绘制分割掩码
+    draw_label: bool                   # 绘制标签
+    draw_confidence: bool              # 绘制置信度
+    bbox_color: Optional[str]          # 边界框颜色（十六进制）
+    mask_alpha: Optional[float]        # 掩码透明度
+    line_thickness: Optional[int]      # 线条厚度
+    font_scale: Optional[float]        # 字体大小
+    label_prefix: Optional[str]         # 标签前缀
+    z_order: Optional[int]             # 绘制层级
 ```
 
 #### 3.4.2 GPU调度策略
@@ -378,52 +419,91 @@ class AnalysisTask(BaseModel):
 
 #### 3.5.1 配置参数清单
 
-**输入视频配置**：
+**输入配置（InputConfig）**：
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| input.width | int | 源视频宽度 | 输入视频宽度 |
-| input.height | int | 源视频高度 | 输入视频高度 |
-| input.fps | float | 源视频帧率 | 输入视频帧率 |
-| input.format | str | "I420" | 输入格式（I420、BGR、RGB） |
-| input.codec | str | "h264" | 视频编码（h264、h265、vp8） |
+| source | VideoSource | - | 视频源（本地或在线） |
+| resize.width | int | 源视频宽度 | resize 宽度 |
+| resize.height | int | 源视频高度 | resize 高度 |
+| resize.maintain_aspect | bool | true | 保持宽高比 |
+| roi.x1 | int | 0 | ROI 区域 x1 |
+| roi.y1 | int | 0 | ROI 区域 y1 |
+| roi.x2 | int | -1 | ROI 区域 x2（-1 表示全区域） |
+| roi.y2 | int | -1 | ROI 区域 y2 |
+| skip_frames | int | 0 | 跳帧数（每N帧处理1帧） |
+| buffer_size | int | 30 | 缓冲区大小 |
+| decode_threads | int | 4 | 解码线程数 |
 
-**处理配置**：
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| processing.resize.width | int | - | 推理前 resize 宽度（-1 保持原尺寸） |
-| processing.resize.height | int | - | 推理前 resize 高度 |
-| processing.resize.maintain_aspect | bool | true | 保持宽高比 |
-| processing.roi.x1 | int | 0 | ROI 区域 x1 |
-| processing.roi.y1 | int | 0 | ROI 区域 y1 |
-| processing.roi.x2 | int | -1 | ROI 区域 x2（-1 表示全区域） |
-| processing.roi.y2 | int | -1 | ROI 区域 y2 |
-| processing.skip_frames | int | 0 | 跳帧数（每N帧处理1帧） |
-| processing.batch_size | int | 1 | 批量推理大小 |
-
-**输出视频配置**：
+**视频源（VideoSource）**：
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| output.width | int | 源视频宽度 | 输出视频宽度 |
-| output.height | int | 源视频高度 | 输出视频高度 |
-| output.fps | float | 源视频帧率 | 输出视频帧率 |
-| output.format | str | "I420" | 输出格式 |
-| output.codec | str | "h264" | 输出编码（h264、h265） |
-| output.bitrate | str | "2M" | 输出码率 |
-| output.gop_size | int | 30 | GOP 大小 |
-| output.preset | str | "ultrafast" | 编码预设 |
-| output.profile | str | "main" | 编码 profile |
+| source.type | str | - | 视频源类型（local/rtsp/http/https） |
+| source.id | string | - | 本地视频源ID（type=local时必填） |
+| source.url | string | - | 在线视频地址（type=rtsp/http/https时必填） |
+| source.auto_download | bool | true | 是否自动下载为本地MP4 |
+| source.timeout | int | 300 | 下载超时时间（秒） |
 
-**输出目标配置**：
+**输出配置（OutputConfig）**：
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| output.target.type | str | "file" | 输出类型（file、rtmp、hls） |
-| output.target.path | str | "/tmp/output" | 文件输出目录 |
-| output.target.rtmp_url | str | - | RTMP 输出地址 |
-| output.target.hls_dir | str | - | HLS 输出目录 |
+| output.type | str | "file" | 输出类型（file/rtmp/hls） |
+| output.path | string | "/data/output" | 输出目录（以任务ID命名） |
+| output.rtmp_url | string | - | RTMP 推流地址 |
+| output.hls_dir | string | - | HLS 输出目录 |
+| output.format.width | int | 源视频宽度 | 输出视频宽度 |
+| output.format.height | int | 源视频高度 | 输出视频高度 |
+| output.format.fps | float | 源视频帧率 | 输出视频帧率 |
+| output.format.codec | str | "h264" | 视频编码（h264、h265） |
+| output.format.bitrate | str | "2M" | 输出码率 |
+| output.format.gop_size | int | 30 | GOP 大小 |
+| output.format.profile | str | "main" | 编码 profile |
+
+**模型配置（ModelConfig）**：
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| model_config.parallel | bool | true | 是否并行推理 |
+| model_config.models | array | - | 模型列表 |
+
+**模型项（ModelItem）**：
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| model.name | str | - | 模型名称 |
+| model.config | object | - | 推理配置 |
+| model.enabled | bool | true | 是否启用 |
+| model.for_display | bool | true | 是否用于绘制展示 |
+| model.draw_config | object | - | 绘制配置 |
+
+**绘制配置（DrawConfig）**：
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| draw_config.draw_bbox | bool | true | 绘制边界框 |
+| draw_config.draw_mask | bool | false | 绘制分割掩码 |
+| draw_config.draw_label | bool | true | 绘制标签 |
+| draw_config.draw_confidence | bool | true | 绘制置信度 |
+| draw_config.bbox_color | string | "#00FF00" | 边界框颜色 |
+| draw_config.mask_alpha | float | 0.5 | 掩码透明度 |
+| draw_config.line_thickness | int | 2 | 线条厚度 |
+| draw_config.font_scale | float | 0.8 | 字体大小 |
+| draw_config.label_prefix | string | - | 标签前缀 |
+| draw_config.z_order | int | 0 | 绘制层级 |
+
+#### 3.5.2 设计说明
+
+**视频源设计**：
+- 支持本地视频源（已上传的视频文件）
+- 支持在线视频源（RTSP流、HTTP/HTTPS视频）
+- 在线视频源自动下载为本地MP4，与任务ID绑定存储
+
+**多模型并行推理**：
+- 支持多模型并行推理，默认启用
+- 每个模型独立配置推理参数和绘制参数
+- 通过 `for_display` 标记是否用于绘制展示
 
 #### 3.5.2 配置文件结构
 
@@ -755,29 +835,47 @@ DELETE /api/v1/videos/{id}            删除视频
 
 ```
 GET    /api/v1/models                  获取模型列表
-GET    /api/v1/models/{name}           获取模型详情
-GET    /api/v1/models/instances        获取模型实例状态
-POST   /api/v1/models/reload           重新加载模型实例
+GET    /api/v1/models/{name}          获取模型详情
+GET    /api/v1/models/instances       获取模型实例状态
 ```
 
 ### 7.3 任务 API
 
 ```
-POST   /api/v1/tasks                   创建任务
-GET    /api/v1/tasks                   获取任务列表
-GET    /api/v1/tasks/{id}              获取任务详情
-POST   /api/v1/tasks/{id}/start        启动任务
-POST   /api/v1/tasks/{id}/stop         停止任务
-DELETE /api/v1/tasks/{id}              删除任务
-GET    /api/v1/tasks/{id}/output        获取输出地址
+POST   /api/v1/tasks                  创建任务
+GET    /api/v1/tasks                  获取任务列表
+GET    /api/v1/tasks/{id}             获取任务详情
+POST   /api/v1/tasks/{id}/start       启动任务
+POST   /api/v1/tasks/{id}/stop        停止任务
+DELETE /api/v1/tasks/{id}             删除任务
+GET    /api/v1/tasks/{id}/output      获取输出地址
 ```
 
-### 7.4 配置 API
+### 7.4 推理 API
 
 ```
-GET    /api/v1/config/video-formats    获取视频格式配置
+POST   /api/v1/tasks/{id}/inference   为任务绑定/切换模型（支持多模型）
+GET    /api/v1/tasks/{id}/inferences 获取任务的所有推理会话
+GET    /api/v1/tasks/{id}/inference/stream  推理状态SSE流
+GET    /api/v1/inferences/{id}        查询推理状态
+POST   /api/v1/inferences/{id}/stop   停止推理
+DELETE /api/v1/inferences/{id}        删除推理会话
+```
+
+### 7.5 配置 API（已移除预定义preset）
+
+```
+GET    /api/v1/config/video-formats    获取视频格式配置（已废弃）
 GET    /api/v1/config/pipelines        获取 Pipeline 配置
 ```
+
+---
+
+**设计说明**：
+- 任务参数按领域划分为 input_config、output_config、model_config
+- 视频源统一在 input_config.source 中定义
+- 推理接口使用与任务创建一致的 model_config 结构
+- 移除 preset 预定义配置，所有参数直接开放
 
 ---
 
@@ -791,9 +889,10 @@ GET    /api/v1/config/pipelines        获取 Pipeline 配置
 | 2 | 模型实例池 | 启动时加载多个 GPU 模型实例，可查看实例状态 |
 | 3 | 离线任务 | 可创建并执行离线任务，输出带检测框的视频 |
 | 4 | 实时任务 | 可创建并执行实时任务，持续输出检测结果 |
-| 5 | 视频配置 | 可通过配置文件调整输入输出格式 |
-| 6 | 离线归档 | 分析结果保存到文件系统，可导出 JSON |
-| 7 | 前端播放 | 可在前端播放处理后的视频 |
+| 5 | 任务参数配置 | 通过 API 参数配置输入/输出/模型/绘制配置 |
+| 6 | 多模型并行推理 | 支持多模型并行推理，各自独立配置和绘制 |
+| 7 | 在线视频源 | 支持 RTSP/HTTP/HTTPS 视频源，自动下载为本地MP4 |
+| 8 | 前端播放 | 可在前端播放处理后的视频 |
 
 ### 8.2 性能验收
 

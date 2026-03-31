@@ -649,7 +649,6 @@ components:
       required:
         - name
         - task_type
-        - video_source_id
         - input_config
         - output_config
       properties:
@@ -660,10 +659,6 @@ components:
           type: string
           enum: [realtime, offline]
           description: 任务类型
-        video_source_id:
-          type: string
-          format: uuid
-          description: 视频源ID
         input_config:
           $ref: '#/components/schemas/InputConfig'
         output_config:
@@ -678,10 +673,11 @@ components:
 
     InputConfig:
       type: object
+      required:
+        - source
       properties:
-        preset:
-          type: string
-          description: 预定义配置名称
+        source:
+          $ref: '#/components/schemas/VideoSource'
         resize:
           type: object
           properties:
@@ -706,6 +702,29 @@ components:
           type: integer
         buffer_size:
           type: integer
+        decode_threads:
+          type: integer
+
+    VideoSource:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [local, rtsp, http, https]
+          description: 视频源类型
+        id:
+          type: string
+          description: 本地视频源ID（type=local时必填）
+        url:
+          type: string
+          description: 在线视频地址（type=rtsp/http/https时必填）
+        auto_download:
+          type: boolean
+          default: true
+          description: 是否自动下载为本地MP4
+        timeout:
+          type: integer
+          description: 下载超时时间（秒）
 
     VideoConfig:
       type: object
@@ -813,8 +832,6 @@ components:
         task_type:
           type: string
           enum: [realtime, offline]
-        video_source_id:
-          type: string
         input_config:
           $ref: '#/components/schemas/InputConfig'
         output_config:

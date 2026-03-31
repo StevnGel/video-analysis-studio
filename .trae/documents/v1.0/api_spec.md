@@ -338,8 +338,7 @@ interface VideoSource {
 |------|------|------|------|
 | name | string | 是 | 任务名称 |
 | task_type | string | 是 | 任务类型：`realtime`（实时）或 `offline`（离线） |
-| video_source_id | string | 是 | 视频源ID |
-| input_config | object | 是 | 输入配置 |
+| input_config | object | 是 | 输入配置（包含视频源） |
 | output_config | object | 是 | 输出配置 |
 | model_config | object | 否 | 模型配置（支持多模型并行） |
 | priority | int | 否 | 优先级，0-100，默认50 |
@@ -350,43 +349,50 @@ interface VideoSource {
 interface TaskRequest {
   name: string;
   task_type: "realtime" | "offline";
-  video_source_id: string;
-  input_config: InputConfig;      // 输入配置
+  input_config: InputConfig;      // 输入配置（包含视频源）
   output_config: OutputConfig;    // 输出配置
   model_config?: ModelConfig;      // 模型配置（可选）
   priority?: number;
 }
 
 interface InputConfig {
-  preset?: string;                  // 预定义配置名称
-  resize?: {                        // resize 配置
+  source: VideoSource;             // 视频源（本地或在线）
+  resize?: {                       // resize 配置
     width: number;
     height: number;
     maintain_aspect?: boolean;
   };
-  roi?: {                           // ROI 区域
+  roi?: {                          // ROI 区域
     x1: number;
     y1: number;
     x2: number;
     y2: number;
   };
-  skip_frames?: number;             // 跳帧数
-  buffer_size?: number;             // 缓冲区大小
+  skip_frames?: number;            // 跳帧数
+  buffer_size?: number;            // 缓冲区大小
+  decode_threads?: number;         // 解码线程数
+}
+
+interface VideoSource {
+  type: "local" | "rtsp" | "http" | "https";  // 视频源类型
+  id?: string;                    // 本地视频源ID（type=local时必填）
+  url?: string;                   // 在线视频地址（type=rtsp/http/https时必填）
+  auto_download?: boolean;        // 是否自动下载为本地MP4（在线源默认true）
+  timeout?: number;               // 下载超时时间（秒）
 }
 
 interface OutputConfig {
-  type: "file" | "rtmp" | "hls";   // 输出类型
-  path?: string;                   // 文件输出目录
-  rtmp_url?: string;               // RTMP 推流地址
-  hls_dir?: string;                // HLS 输出目录
-  format?: {                       // 视频格式
+  type: "file" | "rtmp" | "hls";  // 输出类型
+  path?: string;                  // 输出目录（以任务ID命名）
+  rtmp_url?: string;              // RTMP 推流地址
+  hls_dir?: string;               // HLS 输出目录
+  format?: {                      // 视频格式
     width?: number;
     height?: number;
     fps?: number;
     codec?: "h264" | "h265";
     bitrate?: string;
     gop_size?: number;
-    preset?: string;
     profile?: string;
   };
 }
@@ -418,19 +424,79 @@ interface DrawConfig {
 }
 ```
 
-**请求示例 - 无模型任务（仅转码）：**
+**请求示例 - 本地视频源任务：**
 
 ```json
 {
   "name": "视频转码任务",
   "task_type": "offline",
-  "video_source_id": "550e8400-e29b-41d4-a716-446655440000",
   "input_config": {
-    "preset": "hd_1080p"
+    "source": {
+      "type": "local",
+      "id": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "resize": {
+      "width": 1920,
+      "height": 1080
+    }
   },
   "output_config": {
     "type": "file",
     "path": "/data/output"
+  }
+}
+```
+
+**请求示例 - 在线视频源任务（自动下载）：**
+
+```json
+{
+  "name": "在线视频分析任务",
+  "task_type": "offline",
+  "input_config": {
+    "source": {
+      "type": "http",
+      "url": "https://example.com/video.mp4",
+      "auto_download": true,
+      "timeout": 300
+    },
+    "resize": {
+      "width": 1280,
+      "height": 720
+    },
+    "skip_frames": 0
+  },
+  "output_config": {
+    "type": "file",
+    "path": "/data/output",
+    "format": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "h264",
+      "bitrate": "4M"
+    }
+  }
+}
+```
+
+**请求示例 - RTSP实时流任务：**
+
+```json
+{
+  "name": "实时监控任务",
+  "task_type": "realtime",
+  "input_config": {
+    "source": {
+      "type": "rtsp",
+      "url": "rtsp://192.168.1.100:554/stream",
+      "auto_download": false
+    },
+    "buffer_size": 30
+  },
+  "output_config": {
+    "type": "rtmp",
+    "rtmp_url": "rtmp://localhost/live/output"
   }
 }
 ```
@@ -441,9 +507,11 @@ interface DrawConfig {
 {
   "name": "安防监控任务",
   "task_type": "offline",
-  "video_source_id": "550e8400-e29b-41d4-a716-446655440000",
   "input_config": {
-    "preset": "hd_1080p",
+    "source": {
+      "type": "local",
+      "id": "550e8400-e29b-41d4-a716-446655440000"
+    },
     "resize": {
       "width": 640,
       "height": 640,
@@ -494,9 +562,11 @@ interface DrawConfig {
 {
   "name": "交通分析任务",
   "task_type": "offline",
-  "video_source_id": "550e8400-e29b-41d4-a716-446655440000",
   "input_config": {
-    "preset": "traffic_plate",
+    "source": {
+      "type": "local",
+      "id": "550e8400-e29b-41d4-a716-446655440000"
+    },
     "resize": {
       "width": 1280,
       "height": 720
@@ -563,35 +633,9 @@ interface DrawConfig {
 
 **请求示例 - 多模型串联任务（模型链配置）：**
 
-```json
-{
-  "name": "交通分析任务",
-  "task_type": "offline",
-  "video_source_id": "550e8400-e29b-41d4-a716-446655440000",
-  "video_config": {
-    "preset": "traffic_plate",
-    "processing": {
-      "resize": {"width": 1280, "height": 720},
-      "batch_size": 4
-    }
-  },
-  "output_config": {
-    "type": "file",
-    "path": "/data/output"
-  }
-}
 ```
 
 **成功响应（201）：**
-        "device": "cuda:0"
-      },
-      "output_aggregation": {
-        "mode": "overlay",
-        "draw_mask": true,
-        "mask_alpha": 0.3
-      }
-    }
-  ]
 }
 ```
 
@@ -630,44 +674,7 @@ interface DrawConfig {
 | 404 | 模型不存在 | `{"code": 404, "message": "模型 yolo_v8 不存在"}` |
 | 422 | 任务创建失败 | `{"code": 422, "message": "任务创建失败: 磁盘空间不足"}` |
 
-### 3.2 视频配置参数
-
-```typescript
-interface VideoConfig {
-  preset?: string;                    // 预定义配置名称
-  input?: {
-    width?: number;                  // 输入宽度
-    height?: number;                 // 输入高度
-    fps?: number;                    // 输入帧率
-    format?: "I420" | "BGR" | "RGB"; // 输入格式
-    codec?: string;                  // 视频编码
-  };
-  processing?: {
-    resize?: {
-      width: number;                 // resize 宽度
-      height: number;                // resize 高度
-      maintain_aspect?: boolean;    // 保持宽高比
-    };
-    roi?: {
-      x1: number;                   // ROI x1
-      y1: number;                   // ROI y1
-      x2: number;                   // ROI x2 (-1 表示全区域)
-      y2: number;                   // ROI y2
-    };
-    skip_frames?: number;           // 跳帧数
-    batch_size?: number;            // 批量大小
-  };
-}
-```
-
-### 3.3 输出配置参数
-
-```typescript
-interface OutputConfig {
-  type: "file" | "rtmp" | "hls";    // 输出类型
-  path?: string;                     // 文件输出目录
-  rtmp_url?: string;                 // RTMP 推流地址
-  hls_dir?: string;                  // HLS 输出目录
+### 3.2 成功响应
   format?: {
     width?: number;
     height?: number;
