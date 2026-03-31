@@ -5,6 +5,7 @@ info:
     视频分析工作台后端 API
     - 支持视频上传、任务管理、模型推理
     - 基于 FastAPI 实现
+    - 任务与推理解耦设计，支持动态绑定/切换模型
   version: 1.0.0
   contact:
     name: Video Analysis Studio Team
@@ -169,22 +170,16 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  code:
-                    type: integer
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      deleted_id:
-                        type: string
         '404':
           $ref: '#/components/responses/NotFound'
 
   /api/v1/tasks:
     post:
       summary: 创建分析任务
+      description: |
+        创建视频处理任务。model_name 为可选字段：
+        - 不指定：创建无模型任务，仅转码输出
+        - 指定：创建带推理的任务，输出带检测框的视频
       operationId: createTask
       tags:
         - tasks
@@ -228,7 +223,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [pending, queued, running, paused, completed, failed, cancelled]
+            enum: [pending, pending_with_inference, queued, running, paused, completed, failed, cancelled]
         - name: task_type
           in: query
           schema:
@@ -357,31 +352,83 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/inference/run:
+  /api/v1/tasks/{task_id}/inference:
     post:
-      summary: 发起推理请求
-      operationId: runInference
+      summary: 为任务绑定/切换模型
+      description: |
+        为任务动态绑定或切换推理模型。
+        - mode=replace: 替换当前模型（默认）
+        - mode=append: 追加模型（多模型串联）
+      operationId: bindInference
       tags:
         - inference
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InferenceRequest'
+              $ref: '#/components/schemas/BindInferenceRequest'
       responses:
         '202':
-          description: 推理请求已提交
+          description: 模型已绑定
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/InferenceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
 
-  /api/v1/inference/{inference_id}:
+  /api/v1/tasks/{task_id}/inferences:
+    get:
+      summary: 获取任务的所有推理会话
+      operationId: getTaskInferences
+      tags:
+        - inference
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 推理会话列表
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v1/tasks/{task_id}/inference/stream:
+    get:
+      summary: 推理状态SSE流
+      operationId: inferenceStream
+      tags:
+        - inference
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SSE 流
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /api/v1/inferences/{inference_id}:
     get:
       summary: 查询推理状态
       operationId: getInference
@@ -400,6 +447,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InferenceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: 删除推理会话
+      operationId: deleteInference
+      tags:
+        - inference
+      parameters:
+        - name: inference_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/inferences/{inference_id}/stop:
+    post:
+      summary: 停止推理
+      operationId: stopInference
+      tags:
+        - inference
+      parameters:
+        - name: inference_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 推理已停止
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -558,8 +650,7 @@ components:
         - name
         - task_type
         - video_source_id
-        - model_name
-        - video_config
+        - input_config
         - output_config
       properties:
         name:
@@ -573,18 +664,48 @@ components:
           type: string
           format: uuid
           description: 视频源ID
-        model_name:
-          type: string
-          description: 模型名称
-        video_config:
-          $ref: '#/components/schemas/VideoConfig'
+        input_config:
+          $ref: '#/components/schemas/InputConfig'
         output_config:
           $ref: '#/components/schemas/OutputConfig'
+        model_config:
+          $ref: '#/components/schemas/ModelConfig'
         priority:
           type: integer
           minimum: 0
           maximum: 100
           default: 50
+
+    InputConfig:
+      type: object
+      properties:
+        preset:
+          type: string
+          description: 预定义配置名称
+        resize:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+            maintain_aspect:
+              type: boolean
+        roi:
+          type: object
+          properties:
+            x1:
+              type: integer
+            y1:
+              type: integer
+            x2:
+              type: integer
+            y2:
+              type: integer
+        skip_frames:
+          type: integer
+        buffer_size:
+          type: integer
 
     VideoConfig:
       type: object
@@ -694,15 +815,15 @@ components:
           enum: [realtime, offline]
         video_source_id:
           type: string
-        model_name:
-          type: string
-        video_config:
-          $ref: '#/components/schemas/VideoConfig'
+        input_config:
+          $ref: '#/components/schemas/InputConfig'
         output_config:
           $ref: '#/components/schemas/OutputConfig'
+        model_config:
+          $ref: '#/components/schemas/ModelConfig'
         status:
           type: string
-          enum: [pending, queued, running, paused, completed, failed, cancelled]
+          enum: [pending, pending_with_inference, queued, running, paused, completed, failed, cancelled]
         progress:
           type: number
         gpu_device:
@@ -742,20 +863,82 @@ components:
             pagination:
               $ref: '#/components/schemas/Pagination'
 
-    InferenceRequest:
+    BindInferenceRequest:
       type: object
       required:
-        - video_source_id
-        - model_name
-        - config
+        - model_config
       properties:
-        video_source_id:
+        model_config:
+          $ref: '#/components/schemas/ModelConfig'
+
+    ModelConfig:
+      type: object
+      properties:
+        parallel:
+          type: boolean
+          default: true
+          description: 是否并行推理
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelItem'
+          description: 模型列表
+
+    ModelItem:
+      type: object
+      required:
+        - name
+        - enabled
+      properties:
+        name:
           type: string
-          format: uuid
-        model_name:
-          type: string
+          description: 模型名称
         config:
           $ref: '#/components/schemas/InferenceConfig'
+        enabled:
+          type: boolean
+          description: 是否启用
+        for_display:
+          type: boolean
+          description: 是否用于绘制展示
+        draw_config:
+          $ref: '#/components/schemas/DrawConfig'
+
+    DrawConfig:
+      type: object
+      properties:
+        draw_bbox:
+          type: boolean
+          description: 绘制边界框
+        draw_mask:
+          type: boolean
+          description: 绘制分割掩码
+        draw_label:
+          type: boolean
+          description: 绘制标签
+        draw_confidence:
+          type: boolean
+          description: 绘制置信度
+        bbox_color:
+          type: string
+          description: 边界框颜色（十六进制）
+        mask_alpha:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: 掩码透明度
+        line_thickness:
+          type: integer
+          description: 线条厚度
+        font_scale:
+          type: number
+          description: 字体大小
+        label_prefix:
+          type: string
+          description: 标签前缀
+        z_order:
+          type: integer
+          description: 绘制层级
 
     InferenceConfig:
       type: object
@@ -764,24 +947,35 @@ components:
           type: number
           minimum: 0
           maximum: 1
+          default: 0.25
+          description: 置信度阈值
         iou_threshold:
           type: number
           minimum: 0
           maximum: 1
+          default: 0.45
+          description: IoU 阈值
         max_det:
           type: integer
+          default: 300
+          description: 最大检测数
         classes:
           type: array
           items:
             type: integer
+          description: 目标类别过滤
         device:
           type: string
+          description: 设备选择，如 cuda:0, cuda:1, cpu
         batch_size:
           type: integer
+          description: 批处理大小
         half_precision:
           type: boolean
+          description: 半精度推理
         track_objects:
           type: boolean
+          description: 是否启用目标跟踪
         output_format:
           type: string
           enum: [json, bbox, video]
@@ -793,9 +987,11 @@ components:
           type: string
         task_id:
           type: string
+        model_name:
+          type: string
         status:
           type: string
-          enum: [pending, processing, completed, failed]
+          enum: [pending, processing, completed, failed, cancelled]
         progress:
           type: number
         results:
@@ -810,6 +1006,56 @@ components:
         completed_at:
           type: string
           format: date-time
+
+    ModelChainItem:
+      type: object
+      required:
+        - model_name
+      properties:
+        model_name:
+          type: string
+          description: 模型名称
+        stage:
+          type: string
+          description: 阶段标识
+        config:
+          $ref: '#/components/schemas/InferenceConfig'
+        output_aggregation:
+          $ref: '#/components/schemas/OutputAggregationConfig'
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        result:
+          type: object
+          description: 推理结果
+
+    OutputAggregationConfig:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [merge, overlay, replace]
+          description: 聚合模式
+        draw_bbox:
+          type: boolean
+          description: 绘制边界框
+        draw_mask:
+          type: boolean
+          description: 绘制分割掩码
+        color:
+          type: string
+          description: 绘制颜色（十六进制）
+        label_prefix:
+          type: string
+          description: 标签前缀
+        mask_alpha:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: 掩码透明度
+        z_order:
+          type: integer
+          description: 绘制层级
 
     ErrorResponse:
       type: object
