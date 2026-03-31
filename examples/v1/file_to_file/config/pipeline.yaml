@@ -1,0 +1,143 @@
+# Pipeline 配置
+# 用于定义视频分析的输入输出Pipeline
+
+pipelines:
+  # 文件到文件 (无模型) - 视频转码
+  file_to_file_passthrough:
+    name: "File to File Passthrough"
+    description: "本地视频文件 -> 转码 -> 本地视频文件 (无模型)"
+    type: "passthrough"
+    input:
+      type: "file"
+    output:
+      type: "file"
+    # GStreamer launch 模板
+    # 使用 ${} 作为占位符
+    launch_template: |
+      filesrc location=${INPUT_FILE_PATH} !
+      decodebin !
+      video/x-raw !
+      queue !
+      videoconvert !
+      video/x-raw,format=I420 !
+      videoscale !
+      video/x-raw,width=${OUTPUT_WIDTH},height=${OUTPUT_HEIGHT} !
+      x264enc speed-preset=${ENCODER_PRESET} tune=zerolatency bitrate=${VIDEO_BITRATE} key-int-max=30 !
+      video/x-h264,profile=main !
+      h264parse !
+      mp4mux name=mux !
+      filesink location=${OUTPUT_FILE_PATH}
+
+  # 文件到文件 (带YOLO检测)
+  file_to_file_yolo:
+    name: "File to File YOLO Detection"
+    description: "本地视频文件 -> YOLO检测 -> 本地视频文件"
+    type: "detection"
+    input:
+      type: "file"
+    output:
+      type: "file"
+    launch_template: |
+      filesrc location=${INPUT_FILE_PATH} !
+      decodebin !
+      video/x-raw !
+      queue !
+      videoscale !
+      video/x-raw,width=640,height=640 !
+      appsink name=detection_sink emit-signals=true max-buffers=1 drop=true
+
+      appsrc name=detection_src format=time caps=video/x-raw,format=I420,width=${OUTPUT_WIDTH},height=${OUTPUT_HEIGHT} !
+      queue !
+      videoconvert !
+      x264enc speed-preset=${ENCODER_PRESET} tune=zerolatency bitrate=${VIDEO_BITRATE} key-int-max=30 !
+      video/x-h264,profile=main !
+      h264parse !
+      mp4mux name=mux !
+      filesink location=${OUTPUT_FILE_PATH}
+
+  # RTSP 到 RTMP
+  rtsp_to_rtmp:
+    name: "RTSP to RTMP"
+    description: "RTSP 流 -> RTMP 输出"
+    type: "passthrough"
+    input:
+      type: "rtsp"
+    output:
+      type: "rtmp"
+    launch_template: |
+      rtspsrc location=${INPUT_RTSP_URL} latency=100 !
+      rtph264depay !
+      h264parse !
+      avdec_h264 !
+      video/x-raw !
+      queue !
+      videoconvert !
+      x264enc speed-preset=${ENCODER_PRESET} tune=zerolatency bitrate=${VIDEO_BITRATE} key-int-max=30 !
+      video/x-h264,profile=main !
+      h264parse !
+      flvmux name=mux !
+      rtmpsink location=${OUTPUT_RTMP_URL}
+
+  # 文件到 RTMP
+  file_to_rtmp:
+    name: "File to RTMP"
+    description: "本地视频文件 -> RTMP 输出"
+    type: "passthrough"
+    input:
+      type: "file"
+    output:
+      type: "rtmp"
+    launch_template: |
+      filesrc location=${INPUT_FILE_PATH} !
+      decodebin !
+      video/x-raw !
+      queue !
+      videoconvert !
+      x264enc speed-preset=${ENCODER_PRESET} tune=zerolatency bitrate=${VIDEO_BITRATE} key-int-max=30 !
+      video/x-h264,profile=main !
+      h264parse !
+      flvmux name=mux !
+      rtmpsink location=${OUTPUT_RTMP_URL}
+
+  # 文件到 HLS
+  file_to_hls:
+    name: "File to HLS"
+    description: "本地视频文件 -> HLS 输出"
+    type: "passthrough"
+    input:
+      type: "file"
+    output:
+      type: "hls"
+    launch_template: |
+      filesrc location=${INPUT_FILE_PATH} !
+      decodebin !
+      video/x-raw !
+      queue !
+      videoconvert !
+      x264enc speed-preset=${ENCODER_PRESET} tune=zerolatency bitrate=${VIDEO_BITRATE} key-int-max=30 !
+      video/x-h264,profile=main !
+      h264parse !
+      hlssink location=${HLS_OUTPUT_DIR}/segment_%05d.ts playlist-location=${HLS_OUTPUT_DIR}/playlist.m3u8 target-duration=4
+
+  # RTSP 到文件
+  rtsp_to_file:
+    name: "RTSP to File"
+    description: "RTSP 流 -> 本地视频文件"
+    type: "passthrough"
+    input:
+      type: "rtsp"
+    output:
+      type: "file"
+    launch_template: |
+      rtspsrc location=${INPUT_RTSP_URL} latency=100 !
+      rtph264depay !
+      h264parse !
+      avdec_h264 !
+      video/x-raw !
+      queue !
+      videoconvert !
+      x264enc speed-preset=${ENCODER_PRESET} tune=zerolatency bitrate=${VIDEO_BITRATE} key-int-max=30 !
+      video/x-h264,profile=main !
+      h264parse !
+      mp4mux name=mux !
+      filesink location=${OUTPUT_FILE_PATH}

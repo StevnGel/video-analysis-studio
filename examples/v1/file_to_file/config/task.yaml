@@ -1,0 +1,44 @@
+# 任务配置文件
+# 对应 API 中的 input_config 和 output_config
+
+task:
+  name: "traffic_video_test"
+  task_type: "offline"
+  priority: 50
+
+# 输入配置 (对应 InputConfig)
+input:
+  source:
+    type: "local"                    # local/rtsp/http/https
+    id: "traffic_video_6"            # 本地视频源ID (可选)
+    path: "/data/videos/traffic_video_6.mp4"  # 文件路径
+  resize:
+    width: 1920                      # resize 宽度
+    height: 1080                     # resize 高度
+    maintain_aspect: true            # 保持宽高比
+  skip_frames: 0                    # 跳帧数
+  buffer_size: 30                   # 缓冲区大小
+  decode_threads: 4                 # 解码线程数
+
+# 输出配置 (对应 OutputConfig)
+output:
+  type: "file"                       # file/rtmp/hls
+  path: "/data/output"               # 输出目录
+  format:
+    width: 1920                     # 输出视频宽度
+    height: 1080                    # 输出视频高度
+    fps: 30.0                       # 输出视频帧率
+    codec: "h264"                   # 视频编码 (h264/h265)
+    bitrate: "4M"                   # 视频码率
+    gop_size: 30                    # GOP 大小
+    profile: "main"                 # 编码 profile
+
+# Pipeline 配置 (对应 PipelineType)
+pipeline:
+  name: "file_to_file_passthrough"  # Pipeline 名称
+  type: "passthrough"              # passthrough/detection
+
+# 运行配置
+runtime:
+  output_file_path: "/data/output/traffic_video_6_output.mp4"
+  log_level: "info"                # info/debug/warning/error

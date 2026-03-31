@@ -1,0 +1,14 @@
+# File to File Pipeline 依赖
+
+PyGObject>=3.44.0
+GObject Introspection bindings for Python
+
+pycairo>=1.20.0
+Cairo bindings for Python
+
+PyYAML>=6.0
+YAML parsing library
+
+# GStreamer 系统依赖 (需要单独安装)
+# Ubuntu/Debian: sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+# macOS: brew install gstreamer

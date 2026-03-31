@@ -1,1 +1,0 @@
-# Video Analysis Studio Backend
