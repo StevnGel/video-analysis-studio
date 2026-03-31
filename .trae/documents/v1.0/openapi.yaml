@@ -1,0 +1,865 @@
+openapi: 3.0.3
+info:
+  title: Video Analysis Studio API
+  description: |
+    视频分析工作台后端 API
+    - 支持视频上传、任务管理、模型推理
+    - 基于 FastAPI 实现
+  version: 1.0.0
+  contact:
+    name: Video Analysis Studio Team
+
+servers:
+  - url: http://localhost:8000
+    description: 本地开发服务器
+
+tags:
+  - name: videos
+    description: 视频源管理
+  - name: tasks
+    description: 任务管理
+  - name: inference
+    description: 推理服务
+  - name: models
+    description: 模型管理
+
+paths:
+  /:
+    get:
+      summary: 根路径
+      operationId: root
+      responses:
+        '200':
+          description: API 根路径响应
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  version:
+                    type: string
+
+  /health:
+    get:
+      summary: 健康检查
+      operationId: health
+      tags:
+        - system
+      responses:
+        '200':
+          description: 服务健康
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  /api/v1/videos/upload:
+    post:
+      summary: 上传视频文件
+      operationId: uploadVideo
+      tags:
+        - videos
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 视频文件
+                name:
+                  type: string
+                  description: 自定义视频名称
+                tags:
+                  type: string
+                  description: 视频标签，JSON数组字符串
+      responses:
+        '201':
+          description: 视频上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/videos:
+    get:
+      summary: 获取视频列表
+      operationId: getVideos
+      tags:
+        - videos
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ready, processing, deleted]
+        - name: tags
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 视频列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoListResponse'
+
+  /api/v1/videos/{video_id}:
+    get:
+      summary: 获取视频详情
+      operationId: getVideo
+      tags:
+        - videos
+      parameters:
+        - name: video_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 视频详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: 删除视频
+      operationId: deleteVideo
+      tags:
+        - videos
+      parameters:
+        - name: video_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      deleted_id:
+                        type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/tasks:
+    post:
+      summary: 创建分析任务
+      operationId: createTask
+      tags:
+        - tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: 任务创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    get:
+      summary: 获取任务列表
+      operationId: getTasks
+      tags:
+        - tasks
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, queued, running, paused, completed, failed, cancelled]
+        - name: task_type
+          in: query
+          schema:
+            type: string
+            enum: [realtime, offline]
+      responses:
+        '200':
+          description: 任务列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+
+  /api/v1/tasks/{task_id}:
+    get:
+      summary: 获取任务详情
+      operationId: getTask
+      tags:
+        - tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 任务详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: 删除任务
+      operationId: deleteTask
+      tags:
+        - tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/tasks/{task_id}/start:
+    post:
+      summary: 启动任务
+      operationId: startTask
+      tags:
+        - tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 任务已启动
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/v1/tasks/{task_id}/stop:
+    post:
+      summary: 停止任务
+      operationId: stopTask
+      tags:
+        - tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 任务已停止
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/tasks/{task_id}/output:
+    get:
+      summary: 获取任务输出
+      operationId: getTaskOutput
+      tags:
+        - tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 输出信息
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/inference/run:
+    post:
+      summary: 发起推理请求
+      operationId: runInference
+      tags:
+        - inference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InferenceRequest'
+      responses:
+        '202':
+          description: 推理请求已提交
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/inference/{inference_id}:
+    get:
+      summary: 查询推理状态
+      operationId: getInference
+      tags:
+        - inference
+      parameters:
+        - name: inference_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 推理状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InferenceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/models:
+    get:
+      summary: 获取模型列表
+      operationId: getModels
+      tags:
+        - models
+      responses:
+        '200':
+          description: 模型列表
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v1/models/{name}:
+    get:
+      summary: 获取模型详情
+      operationId: getModel
+      tags:
+        - models
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 模型详情
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/models/instances:
+    get:
+      summary: 获取模型实例状态
+      operationId: getModelInstances
+      tags:
+        - models
+      responses:
+        '200':
+          description: 实例状态列表
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    VideoInfo:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - path
+        - size
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 视频源ID
+        name:
+          type: string
+          description: 视频显示名称
+        original_name:
+          type: string
+          description: 原始文件名
+        type:
+          type: string
+          enum: [file, rtsp]
+          description: 视频源类型
+        path:
+          type: string
+          description: 文件路径或RTSP地址
+        size:
+          type: integer
+          format: int64
+          description: 文件大小（字节）
+        duration:
+          type: number
+          description: 时长（秒）
+        width:
+          type: integer
+          description: 视频宽度
+        height:
+          type: integer
+          description: 视频高度
+        fps:
+          type: number
+          description: 帧率
+        codec:
+          type: string
+          description: 视频编码
+        status:
+          type: string
+          enum: [ready, processing, deleted]
+          description: 状态
+        tags:
+          type: array
+          items:
+            type: string
+          description: 标签
+        metadata:
+          type: object
+          description: 额外元数据
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    VideoListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            videos:
+              type: array
+              items:
+                $ref: '#/components/schemas/VideoInfo'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - name
+        - task_type
+        - video_source_id
+        - model_name
+        - video_config
+        - output_config
+      properties:
+        name:
+          type: string
+          description: 任务名称
+        task_type:
+          type: string
+          enum: [realtime, offline]
+          description: 任务类型
+        video_source_id:
+          type: string
+          format: uuid
+          description: 视频源ID
+        model_name:
+          type: string
+          description: 模型名称
+        video_config:
+          $ref: '#/components/schemas/VideoConfig'
+        output_config:
+          $ref: '#/components/schemas/OutputConfig'
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+
+    VideoConfig:
+      type: object
+      properties:
+        preset:
+          type: string
+          description: 预定义配置名称
+        input:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+            fps:
+              type: number
+            format:
+              type: string
+              enum: [I420, BGR, RGB]
+            codec:
+              type: string
+        processing:
+          type: object
+          properties:
+            resize:
+              type: object
+              properties:
+                width:
+                  type: integer
+                height:
+                  type: integer
+                maintain_aspect:
+                  type: boolean
+            roi:
+              type: object
+              properties:
+                x1:
+                  type: integer
+                y1:
+                  type: integer
+                x2:
+                  type: integer
+                y2:
+                  type: integer
+            skip_frames:
+              type: integer
+            batch_size:
+              type: integer
+
+    OutputConfig:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [file, rtmp, hls]
+        path:
+          type: string
+        rtmp_url:
+          type: string
+        hls_dir:
+          type: string
+        format:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+            fps:
+              type: number
+            codec:
+              type: string
+              enum: [h264, h265]
+            bitrate:
+              type: string
+            gop_size:
+              type: integer
+            preset:
+              type: string
+            profile:
+              type: string
+        draw_detection:
+          type: boolean
+        detection_options:
+          type: object
+          properties:
+            show_labels:
+              type: boolean
+            show_confidence:
+              type: boolean
+            line_thickness:
+              type: integer
+            font_scale:
+              type: number
+
+    TaskResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        task_type:
+          type: string
+          enum: [realtime, offline]
+        video_source_id:
+          type: string
+        model_name:
+          type: string
+        video_config:
+          $ref: '#/components/schemas/VideoConfig'
+        output_config:
+          $ref: '#/components/schemas/OutputConfig'
+        status:
+          type: string
+          enum: [pending, queued, running, paused, completed, failed, cancelled]
+        progress:
+          type: number
+        gpu_device:
+          type: string
+        result_url:
+          type: string
+        priority:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+        statistics:
+          type: object
+
+    TaskListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            tasks:
+              type: array
+              items:
+                $ref: '#/components/schemas/TaskResponse'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    InferenceRequest:
+      type: object
+      required:
+        - video_source_id
+        - model_name
+        - config
+      properties:
+        video_source_id:
+          type: string
+          format: uuid
+        model_name:
+          type: string
+        config:
+          $ref: '#/components/schemas/InferenceConfig'
+
+    InferenceConfig:
+      type: object
+      properties:
+        confidence_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        iou_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        max_det:
+          type: integer
+        classes:
+          type: array
+          items:
+            type: integer
+        device:
+          type: string
+        batch_size:
+          type: integer
+        half_precision:
+          type: boolean
+        track_objects:
+          type: boolean
+        output_format:
+          type: string
+          enum: [json, bbox, video]
+
+    InferenceResponse:
+      type: object
+      properties:
+        inference_id:
+          type: string
+        task_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        progress:
+          type: number
+        results:
+          type: object
+        result_url:
+          type: string
+        error_message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        detail:
+          type: object
+        request_id:
+          type: string
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 400
+            message: 请求参数错误
+
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 404
+            message: 资源不存在
+
+    UnprocessableEntity:
+      description: 业务逻辑错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 422
+            message: 业务逻辑错误
+
+    InternalError:
+      description: 服务器内部错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 500
+            message: 服务器内部错误
