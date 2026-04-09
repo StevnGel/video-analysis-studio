@@ -1,11 +1,17 @@
 """Unit tests for models"""
 
 import pytest
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import numpy as np
 
 
 def test_yolo_model_initialize():
     """Test YOLO model initialization"""
-    from ..src.models.yolo import YOLOModel
+    from src.models.yolo import YOLOModel
 
     model = YOLOModel()
     config = {
@@ -22,16 +28,18 @@ def test_yolo_model_initialize():
 
 def test_yolo_model_infer():
     """Test YOLO model inference"""
-    from ..src.models.yolo import YOLOModel
-    from ..src.models.base import ModelInput
-    import numpy as np
+    from src.models.yolo import YOLOModel
+    from src.models.base import ModelInput
 
     model = YOLOModel()
     model.initialize({})
 
+    frame1 = np.zeros((640, 640, 3), dtype=np.uint8)
+    frame2 = np.zeros((640, 640, 3), dtype=np.uint8)
+
     inputs = [
-        ModelInput(frame=np.zeros((640, 640, 3), timestamp=0.0),
-        ModelInput(frame=np.zeros((640, 640, 3), timestamp=0.033)
+        ModelInput(frame=frame1, timestamp=0.0),
+        ModelInput(frame=frame2, timestamp=0.033)
     ]
 
     outputs = model.infer(inputs)
@@ -42,7 +50,7 @@ def test_yolo_model_infer():
 
 def test_yolo_model_release():
     """Test YOLO model release"""
-    from ..src.models.yolo import YOLOModel
+    from src.models.yolo import YOLOModel
 
     model = YOLOModel()
     model.initialize({})
@@ -54,7 +62,7 @@ def test_yolo_model_release():
 
 def test_model_instance_pool():
     """Test model instance pool"""
-    from ..src.models.manager import ModelInstancePool
+    from src.models.manager import ModelInstancePool
 
     config = {
         "gpu_instances": [
@@ -78,7 +86,7 @@ def test_model_instance_pool():
 
 def test_model_instance_creation():
     """Test model instance creation"""
-    from ..src.models.manager import ModelInstance
+    from src.models.manager import ModelInstance
     from datetime import datetime
 
     instance = ModelInstance(
@@ -96,7 +104,7 @@ def test_model_instance_creation():
 
 def test_detection_result_model():
     """Test detection result with model"""
-    from ..src.models.base import DetectionResult
+    from src.models.base import DetectionResult
 
     result = DetectionResult(
         class_id=0,
@@ -111,7 +119,7 @@ def test_detection_result_model():
 
 def test_model_output():
     """Test model output"""
-    from ..src.models.base import ModelOutput
+    from src.models.base import ModelOutput
 
     output = ModelOutput(
         predictions=[

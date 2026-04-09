@@ -1,5 +1,5 @@
 """Configuration module"""
 
-from .loader import ConfigLoader, get_settings
+from .loader import ConfigLoader, get_settings, Settings
 
-__all__ = ["ConfigLoader", "get_settings"]
+__all__ = ["ConfigLoader", "get_settings", "Settings"]

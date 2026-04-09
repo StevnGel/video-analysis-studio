@@ -1,11 +1,15 @@
 """Unit tests for Video Analysis Studio Backend"""
 
 import pytest
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 def test_config_loader():
     """Test configuration loader"""
-    from ..src.config import ConfigLoader
+    from src.config import ConfigLoader
 
     loader = ConfigLoader()
     settings = loader.load()
@@ -16,10 +20,9 @@ def test_config_loader():
 
 def test_config_resolve_env_vars():
     """Test environment variable resolution"""
-    import os
-    from ..src.config import ConfigLoader
-
     os.environ["TEST_VAR"] = "test_value"
+
+    from src.config import ConfigLoader
 
     loader = ConfigLoader()
     template = "prefix_${TEST_VAR}_suffix"
@@ -30,7 +33,7 @@ def test_config_resolve_env_vars():
 
 def test_settings_defaults():
     """Test default settings values"""
-    from ..src.config import Settings
+    from src.config import Settings
 
     settings = Settings()
 
@@ -41,7 +44,7 @@ def test_settings_defaults():
 
 def test_pagination_meta():
     """Test pagination metadata"""
-    from ..src.schemas.common import PaginationMeta
+    from src.schemas.common import PaginationMeta
 
     meta = PaginationMeta(page=1, page_size=20, total=100, total_pages=5)
 
@@ -54,7 +57,7 @@ def test_pagination_meta():
 def test_video_source_schema():
     """Test video source schema"""
     from datetime import datetime
-    from ..src.schemas.video import VideoSource
+    from src.schemas.video import VideoSource
 
     video = VideoSource(
         id="test-id",
@@ -79,9 +82,9 @@ def test_video_source_schema():
 
 def test_task_create_schema():
     """Test task create schema"""
-    from ..src.schemas.task import TaskCreate, InputConfig, OutputConfig
-    from ..src.schemas.task import VideoSourceInput
-    from ..src.schemas.task import TaskType
+    from src.schemas.task import TaskCreate, InputConfig, OutputConfig
+    from src.schemas.task import VideoSourceInput
+    from src.schemas.task import TaskType
 
     task = TaskCreate(
         name="Test Task",
@@ -98,7 +101,7 @@ def test_task_create_schema():
 
 def test_task_status_enum():
     """Test task status enumeration"""
-    from ..src.schemas.task import TaskStatus
+    from src.schemas.task import TaskStatus
 
     assert TaskStatus.PENDING.value == "pending"
     assert TaskStatus.RUNNING.value == "running"
@@ -107,7 +110,7 @@ def test_task_status_enum():
 
 def test_model_config_schema():
     """Test model configuration schema"""
-    from ..src.schemas.task import ModelConfig, ModelItem, InferenceConfig, DrawConfig
+    from src.schemas.task import ModelConfig, ModelItem, InferenceConfig, DrawConfig
 
     config = ModelConfig(
         parallel=True,
@@ -129,7 +132,7 @@ def test_model_config_schema():
 
 def test_video_model_base():
     """Test video model base class"""
-    from ..src.models.base import VideoModel, ModelInput
+    from src.models.base import VideoModel, ModelInput
 
     class DummyModel(VideoModel):
         @property
@@ -151,7 +154,7 @@ def test_video_model_base():
 
 def test_detection_result():
     """Test detection result"""
-    from ..src.models.base import DetectionResult
+    from src.models.base import DetectionResult
 
     detection = DetectionResult(
         class_id=0,
@@ -167,10 +170,9 @@ def test_detection_result():
 
 def test_config_loader_resolve_env():
     """Test config loader environment variable resolution"""
-    import os
-    from ..src.config import ConfigLoader
-
     os.environ["VIDEO_DIR"] = "/custom/video"
+
+    from src.config import ConfigLoader
 
     loader = ConfigLoader()
     result = loader._resolve_env_vars({"path": "${VIDEO_DIR}"})

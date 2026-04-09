@@ -136,7 +136,7 @@ class TaskCreate(BaseModel):
     task_type: TaskType = TaskType.OFFLINE
     input_config: InputConfig
     output_config: OutputConfig
-    model_config: Optional[ModelConfig] = None
+    model_settings: Optional[ModelConfig] = None
     priority: int = Field(default=50, ge=0, le=100)
 
 
@@ -148,7 +148,7 @@ class TaskResponse(BaseModel):
     video_source_id: Optional[str] = None
     input_config: Optional[InputConfig] = None
     output_config: Optional[OutputConfig] = None
-    model_config: Optional[ModelConfig] = None
+    model_settings: Optional[ModelConfig] = None
     status: TaskStatus = TaskStatus.PENDING
     progress: float = 0.0
     gpu_device: Optional[str] = None

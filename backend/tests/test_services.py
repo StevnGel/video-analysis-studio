@@ -1,12 +1,16 @@
 """Unit tests for services"""
 
 import pytest
-from datetime import datetime
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 def test_video_source_entity():
     """Test video source entity"""
-    from ..src.schemas.video import VideoSource
+    from datetime import datetime
+    from src.schemas.video import VideoSource
 
     video = VideoSource(
         id="test-id",
@@ -33,8 +37,9 @@ def test_video_source_entity():
 
 def test_task_entity():
     """Test task entity"""
-    from ..src.services.task_service import Task
-    from ..src.schemas.task import (
+    from datetime import datetime
+    from src.services.task_service import Task
+    from src.schemas.task import (
         InputConfig,
         OutputConfig,
         VideoSourceInput,
@@ -58,8 +63,8 @@ def test_task_entity():
 
 def test_task_to_response():
     """Test task to response conversion"""
-    from ..src.services.task_service import Task
-    from ..src.schemas.task import (
+    from src.services.task_service import Task
+    from src.schemas.task import (
         InputConfig,
         OutputConfig,
         VideoSourceInput,
@@ -84,8 +89,8 @@ def test_task_to_response():
 
 def test_task_service_create():
     """Test task service creation"""
-    from ..src.services.task_service import TaskService
-    from ..src.schemas.task import (
+    from src.services.task_service import TaskService
+    from src.schemas.task import (
         TaskCreate,
         InputConfig,
         OutputConfig,
@@ -113,12 +118,11 @@ def test_task_service_create():
 
 def test_task_service_list():
     """Test task service list"""
-    from ..src.services.task_service import TaskService
+    from src.services.task_service import TaskService
 
     service = TaskService()
 
-    import asyncio
-    tasks, meta = asyncio.run(service.list_tasks())
+    tasks, meta = service.list_tasks()
 
     assert isinstance(tasks, list)
     assert meta.total >= 0
@@ -126,7 +130,7 @@ def test_task_service_list():
 
 def test_video_service_init():
     """Test video service initialization"""
-    from ..src.services.video_service import VideoService
+    from src.services.video_service import VideoService
 
     service = VideoService()
 
@@ -135,7 +139,7 @@ def test_video_service_init():
 
 def test_model_service_list():
     """Test model service list models"""
-    from ..src.services.model_service import ModelService
+    from src.services.model_service import ModelService
 
     service = ModelService()
     models = service.list_models()

@@ -59,7 +59,7 @@ class ModelConfig(BaseModel):
 
 class InferenceCreate(BaseModel):
     """Inference creation request"""
-    model_config: ModelConfig
+    model_settings: ModelConfig
 
 
 class Detection(BaseModel):
@@ -95,7 +95,7 @@ class InferenceResponse(BaseModel):
     """Inference response"""
     inference_id: str
     task_id: str
-    model_config: ModelConfig
+    model_settings: ModelConfig
     status: InferenceStatus = InferenceStatus.PENDING
     progress: float = 0.0
     results: Optional[InferenceResults] = None
