@@ -102,6 +102,90 @@
 
 ## 5. 工具和配置
 
+### 5.0 虚拟环境（必选）
+
+项目默认使用 `.venv` 虚拟环境，使用 `uv` 管理依赖，默认清华镜像源。
+
+#### 5.0.1 安装 uv
+
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -Command "irm https://astral.sh/uv/install.ps1 | iex"
+
+# 或使用 pip 安装
+pip install uv
+```
+
+#### 5.0.2 创建虚拟环境
+
+```bash
+# 进入项目目录
+cd /Users/zengwenhua/py_workspace/video-analysis-studio/backend
+
+# 创建虚拟环境（自动安装依赖）
+uv venv --python 3.11
+
+# 或指定已有 Python
+uv venv
+```
+
+#### 5.0.3 配置镜像源（可选）
+
+创建 `~/.pip/pip.conf` 或在项目中配置：
+
+```ini
+# pip 配置
+[global]
+index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+trusted-host = pypi.tuna.tsinghua.edu.cn
+```
+
+uv 镜像配置：
+
+```bash
+# 设置全局镜像
+uv pip install --help | grep mirror
+# 或使用环境变量
+export UV_DEFAULT_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+#### 5.0.4 安装依赖
+
+```bash
+# 激活虚拟环境
+source .venv/bin/activate
+
+# 安装依赖（使用 requirements.txt）
+uv pip install -r requirements.txt
+
+# 或自动从 pyproject.toml 安装
+uv sync
+```
+
+#### 5.0.5 开发流程
+
+```bash
+# 1. 每次开发前激活虚拟环境
+source .venv/bin/activate
+
+# 2. 运行代码
+python -m src.main
+
+# 3. 添加新依赖
+uv add <package>
+
+# 4. 更新依赖
+uv pip install -r requirements.txt --upgrade
+```
+
+#### 5.0.6 IDE 配置
+
+- **VS Code**: 在 `.vscode/settings.json` 中配置 Python 解释器路径
+- **PyCharm**: 将项目解释器设置为 `.venv` 虚拟环境
+
 ### 5.1 开发工具
 - 使用 VS Code 或 PyCharm 作为主要开发工具
 - 安装必要的扩展，如 Pylance、Flake8、Black 等

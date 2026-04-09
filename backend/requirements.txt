@@ -1,5 +1,16 @@
-fastapi
-uvicorn
-python-multipart
-pydantic
-pyyaml
+# Backend 依赖
+# 使用 .venv 虚拟环境
+
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic>=2.5.0
+pyyaml>=6.0
+
+# GStreamer Python 绑定
+PyGObject>=3.44.0
+pycairo>=1.20.0
+
+# 可选依赖
+# opencv-python>=4.8.0  # 视频处理
+# numpy>=1.24.0          # 数值计算
