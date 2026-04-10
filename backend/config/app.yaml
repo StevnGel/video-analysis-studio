@@ -23,9 +23,9 @@ task:
   auto_restart: true
 
 storage:
-  video_dir: "/data/videos"
-  output_dir: "/data/output"
-  archive_dir: "/data/archive"
+  video_dir: "/Users/zengwenhua/py_workspace/video-analysis-studio/data/videos"
+  output_dir: "/Users/zengwenhua/py_workspace/video-analysis-studio/data/output"
+  archive_dir: "/Users/zengwenhua/py_workspace/video-analysis-studio/data/archive"
 
 logging:
   level: "INFO"
