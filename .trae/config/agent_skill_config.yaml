@@ -1,0 +1,660 @@
+# Agent 与 Skill 配置文件
+# 用于持续优化和配置管理
+# 格式: YAML
+
+version: "1.0.0"
+project: video-analysis-studio
+last_updated: "2026-04-16"
+
+# ============================================================================
+# AGENT 配置
+# ============================================================================
+
+agents:
+  - id: AGENT-001
+    name: Backend API Developer
+    description: 负责 FastAPI 后端服务开发、API 端点实现、业务逻辑编写
+    priority: P0
+    phases: [2, 3, 4]
+    working_directory: /public/home/steveglory/workspace/video-analysis-studio/backend
+    capabilities:
+      - FastAPI 路由设计
+      - Pydantic 数据验证
+      - 多进程模型管理
+      - 异步编程
+      - 依赖注入
+    skills:
+      - SKILL-001  # fastapi-expert
+      - SKILL-002  # python-multiprocessing
+      - SKILL-003  # async-python
+      - SKILL-004  # python-testing
+    integration:
+      target_modules:
+        - backend/src/api/
+        - backend/src/services/
+        - backend/src/models/
+        - backend/src/config/
+      config_file: config/app.yaml
+    constraints:
+      max_file_size: 10000
+      require_review: true
+      auto_lint: true
+
+  - id: AGENT-002
+    name: Frontend React Developer
+    description: React 组件开发、TypeScript 类型定义、前端状态管理
+    priority: P1
+    phases: [3, 4]
+    working_directory: /public/home/steveglory/workspace/video-analysis-studio/frontend
+    capabilities:
+      - React 18 组件开发
+      - TypeScript 类型设计
+      - Tailwind CSS 样式
+      - React Router 路由
+      - 视频播放器集成
+    skills:
+      - SKILL-005  # react-18-advanced
+      - SKILL-006  # typescript-expert
+      - SKILL-007  # tailwind-css
+      - SKILL-008  # video-player-integration
+    integration:
+      design_docs:
+        - .trae/documents/f1.0/FRENDESIGN.md
+        - .trae/documents/f1.0/UI_SPEC.md
+      target_modules:
+        - frontend/src/components/
+        - frontend/src/pages/
+        - frontend/src/services/
+        - frontend/src/hooks/
+    constraints:
+      design_compliance: required
+      require_review: true
+      auto_lint: true
+
+  - id: AGENT-003
+    name: GStreamer Pipeline Engineer
+    description: GStreamer Pipeline 设计、appsink/appsrc 处理、视频编解码
+    priority: P0
+    phases: [2, 3]
+    working_directory: /public/home/steveglory/workspace/video-analysis-studio/backend
+    capabilities:
+      - GStreamer Pipeline 构建
+      - appsink 帧提取
+      - appsrc 帧输出
+      - 视频编解码
+      - RTMP/HLS 输出配置
+    skills:
+      - SKILL-009  # gstreamer-expert
+      - SKILL-010  # video-processing
+      - SKILL-011  # opencv-numpy
+      - SKILL-012  # gi-python-bindings
+    integration:
+      target_modules:
+        - backend/src/pipelines/
+        - backend/src/processor/
+      existing_architecture:
+        - backend/src/processor/appsink_handler.py
+      config_file: config/app.yaml
+    constraints:
+      pre_defined_pipelines_only: true
+      require_review: true
+
+  - id: AGENT-004
+    name: QA Testing & Validation
+    description: 单元测试、集成测试、端到端测试、验收测试
+    priority: P0
+    phases: [3, 4, 5]
+    working_directory: /public/home/steveglory/workspace/video-analysis-studio
+    capabilities:
+      - pytest 单元测试
+      - API 集成测试
+      - 端到端测试
+      - 性能基准测试
+      - 视频处理验证
+    skills:
+      - SKILL-013  # pytest-master
+      - SKILL-014  # api-testing
+      - SKILL-015  # e2e-testing
+      - SKILL-016  # performance-testing
+      - SKILL-017  # model-inference-testing
+    integration:
+      test_directory: tests/
+      validation_checklist: .trae/documents/video_analysis_studio_plan.md
+      coverage_target: 0.80
+    constraints:
+      auto_lint: false
+      require_review: false
+      auto_commit_on_pass: true
+
+  - id: AGENT-005
+    name: Technical Documentation
+    description: API 文档生成、代码注释、README 编写、变更日志维护
+    priority: P2
+    phases: [1, 2, 3, 4, 5]
+    working_directory: /public/home/steveglory/workspace/video-analysis-studio
+    capabilities:
+      - OpenAPI 文档生成
+      - Markdown 文档编写
+      - 变更日志生成
+      - README 维护
+    skills:
+      - SKILL-018  # openapi-generator
+      - SKILL-019  # mdoc-gen
+      - SKILL-020  # changelog-manager
+      - SKILL-021  # readme-automation
+    integration:
+      document_directory: .trae/documents/
+      api_spec_file: .trae/documents/v1.0/api_spec.md
+    constraints:
+      read_only_documents: false
+      auto_update_api_spec: true
+
+  - id: AGENT-006
+    name: Project Manager & DevOps
+    description: 进度跟踪、任务分解、环境配置、CI/CD 流水线
+    priority: P2
+    phases: [1, 2, 5]
+    working_directory: /public/home/steveglory/workspace/video-analysis-studio
+    capabilities:
+      - 任务分解与跟踪
+      - 环境搭建
+      - Docker 容器化
+      - CI/CD 流水线
+    skills:
+      - SKILL-022  # task-decomposition
+      - SKILL-023  # docker-compose
+      - SKILL-024  # ci-cd-pipeline
+      - SKILL-025  # environment-setup
+    integration:
+      project_plan: .trae/documents/video_analysis_studio_plan.md
+      docker_files: docker/
+    constraints:
+      require_approval: true
+
+  - id: AGENT-007
+    name: AI/ML Video Analysis Specialist
+    description: YOLO 模型集成优化、多模型串联、GPU 调度策略
+    priority: P1
+    phases: [2, 5]
+    working_directory: /public/home/steveglory/workspace/video-analysis-studio/backend
+    capabilities:
+      - YOLO 模型集成
+      - 模型实例池管理
+      - GPU 资源调度
+      - 多模型并行/串联
+    skills:
+      - SKILL-026  # ultralytics-yolo
+      - SKILL-027  # model-pool-management
+      - SKILL-028  # multi-model-pipeline
+      - SKILL-029  # gpu-optimization
+    integration:
+      target_modules:
+        - backend/src/models/
+        - backend/src/executor/
+      model_config: config/app.yaml
+    constraints:
+      require_review: true
+      benchmark_required: true
+
+# ============================================================================
+# SKILL 配置
+# ============================================================================
+
+skills:
+  # Backend API Developer Skills
+  - id: SKILL-001
+    name: fastapi-expert
+    description: FastAPI 路由设计、依赖注入、Pydantic 数据验证
+    priority: P0
+    agent_id: AGENT-001
+    related_technologies:
+      - FastAPI
+      - Pydantic
+      - uvicorn
+      - OpenAPI
+    examples:
+      - 设计 RESTful API 路由
+      - 实现请求/响应模型验证
+      - 配置依赖注入
+
+  - id: SKILL-002
+    name: python-multiprocessing
+    description: 多进程模型加载、进程池管理、IPC 通信
+    priority: P0
+    agent_id: AGENT-001
+    related_technologies:
+      - multiprocessing
+      - concurrent.futures
+      - queue
+      - shared_memory
+    examples:
+      - 实现模型实例池
+      - 管理进程生命周期
+      - 处理进程间通信
+
+  - id: SKILL-003
+    name: async-python
+    description: 异步编程、asyncio 队列、事件循环
+    priority: P1
+    agent_id: AGENT-001
+    related_technologies:
+      - asyncio
+      - aiofiles
+      - aiohttp
+    examples:
+      - 实现异步任务队列
+      - 处理并发请求
+      - 管理异步资源
+
+  - id: SKILL-004
+    name: python-testing
+    description: pytest 单元测试、fixture、mock
+    priority: P1
+    agent_id: AGENT-001
+    related_technologies:
+      - pytest
+      - unittest.mock
+      - pytest-asyncio
+      - coverage
+    examples:
+      - 编写单元测试
+      - 配置测试 fixture
+      - Mock 外部依赖
+
+  # Frontend React Developer Skills
+  - id: SKILL-005
+    name: react-18-advanced
+    description: React Hooks、Context、性能优化
+    priority: P0
+    agent_id: AGENT-002
+    related_technologies:
+      - React 18
+      - useState
+      - useEffect
+      - useContext
+      - useMemo
+      - useCallback
+    examples:
+      - 实现自定义 Hooks
+      - 状态管理方案
+      - 性能优化技巧
+
+  - id: SKILL-006
+    name: typescript-expert
+    description: 泛型、类型守卫、装饰器
+    priority: P0
+    agent_id: AGENT-002
+    related_technologies:
+      - TypeScript
+      - generics
+      - type guards
+      - decorators
+    examples:
+      - 设计类型安全 API
+      - 实现泛型组件
+      - 类型守卫应用
+
+  - id: SKILL-007
+    name: tailwind-css
+    description: 样式开发、响应式设计、动画
+    priority: P1
+    agent_id: AGENT-002
+    related_technologies:
+      - Tailwind CSS
+      - JIT mode
+      - custom utilities
+    examples:
+      - 实现深色主题
+      - 响应式布局
+      - 动画效果
+
+  - id: SKILL-008
+    name: video-player-integration
+    description: video.js、HLS/RTMP 流播放集成
+    priority: P0
+    agent_id: AGENT-002
+    related_technologies:
+      - video.js
+      - HLS.js
+      - RTMP
+    examples:
+      - 集成 video.js 播放器
+      - HLS 流播放
+      - RTMP 流播放
+
+  # GStreamer Pipeline Engineer Skills
+  - id: SKILL-009
+    name: gstreamer-expert
+    description: Pipeline 构建、元素连接、状态管理
+    priority: P0
+    agent_id: AGENT-003
+    related_technologies:
+      - GStreamer 1.0
+      - gst-launch
+      - Gst.parse_launch
+    examples:
+      - 构建视频处理 Pipeline
+      - 管理 Pipeline 状态
+      - 处理元素连接
+
+  - id: SKILL-010
+    name: video-processing
+    description: 帧提取、格式转换、RTMP/HLS 输出
+    priority: P0
+    agent_id: AGENT-003
+    related_technologies:
+      - appsink
+      - appsrc
+      - H264/H265
+      - RTMP
+      - HLS
+    examples:
+      - 从 appsink 提取帧
+      - 视频格式转换
+      - 输出流配置
+
+  - id: SKILL-011
+    name: opencv-numpy
+    description: 图像处理、numpy 数组操作、检测框绘制
+    priority: P0
+    agent_id: AGENT-003
+    related_technologies:
+      - OpenCV
+      - numpy
+      - cv2.rectangle
+      - cv2.putText
+    examples:
+      - 处理视频帧
+      - 绘制检测框
+      - 图像格式转换
+
+  - id: SKILL-012
+    name: gi-python-bindings
+    description: GObject Introspection Python 绑定
+    priority: P1
+    agent_id: AGENT-003
+    related_technologies:
+      - PyGObject
+      - GObject Introspection
+    examples:
+      - 配置 GI 绑定
+      - 处理 GLib 事件
+      - 内存管理
+
+  # QA Testing & Validation Skills
+  - id: SKILL-013
+    name: pytest-master
+    description: pytest 框架、参数化、覆盖率报告
+    priority: P0
+    agent_id: AGENT-004
+    related_technologies:
+      - pytest
+      - pytest-cov
+      - pytest-xdist
+    examples:
+      - 参数化测试
+      - 生成覆盖率报告
+      - 并行测试执行
+
+  - id: SKILL-014
+    name: api-testing
+    description: API 端点测试、HTTP 断言、认证处理
+    priority: P0
+    agent_id: AGENT-004
+    related_technologies:
+      - requests
+      - httpx
+      - pytest-httpx
+    examples:
+      - 测试 REST API
+      - 处理认证
+      - 验证响应结构
+
+  - id: SKILL-015
+    name: e2e-testing
+    description: Playwright/Cypress 端到端测试
+    priority: P1
+    agent_id: AGENT-004
+    related_technologies:
+      - Playwright
+      - Cypress
+      - Selenium
+    examples:
+      - 编写 E2E 测试
+      - 模拟用户交互
+      - 跨浏览器测试
+
+  - id: SKILL-016
+    name: performance-testing
+    description: 视频处理性能基准测试、延迟测量
+    priority: P1
+    agent_id: AGENT-004
+    related_technologies:
+      - timeit
+      - memory_profiler
+      - psutil
+    examples:
+      - 测量推理延迟
+      - 监控 GPU 利用率
+      - 性能基准对比
+
+  - id: SKILL-017
+    name: model-inference-testing
+    description: YOLO 模型推理结果验证、精度评估
+    priority: P0
+    agent_id: AGENT-004
+    related_technologies:
+      - ultralytics
+      - COCO mAP
+    examples:
+      - 验证检测结果
+      - 精度评估
+      - 误检率分析
+
+  # Technical Documentation Skills
+  - id: SKILL-018
+    name: openapi-generator
+    description: 从 FastAPI 代码自动生成 OpenAPI/Swagger 文档
+    priority: P0
+    agent_id: AGENT-005
+    related_technologies:
+      - openapi-python-client
+      - swagger-ui
+      - redoc
+    examples:
+      - 生成 OpenAPI 规范
+      - 自定义文档模板
+      - 维护 API 文档
+
+  - id: SKILL-019
+    name: mdoc-gen
+    description: Markdown 文档生成、结构化输出
+    priority: P1
+    agent_id: AGENT-005
+    related_technologies:
+      - mdx
+      - markdown-it
+    examples:
+      - 生成项目文档
+      - 维护变更日志
+      - 文档模板化
+
+  - id: SKILL-020
+    name: changelog-manager
+    description: 变更日志自动生成、版本对比
+    priority: P2
+    agent_id: AGENT-005
+    related_technologies:
+      - conventional-changelog
+      - semantic-release
+    examples:
+      - 自动生成 CHANGELOG
+      - 版本号管理
+      - 变更分类
+
+  - id: SKILL-021
+    name: readme-automation
+    description: README.md 自动更新、依赖徽章
+    priority: P2
+    agent_id: AGENT-005
+    related_technologies:
+      - shields.io
+      - badges
+    examples:
+      - 更新徽章状态
+      - 维护安装说明
+      - 添加使用示例
+
+  # Project Manager & DevOps Skills
+  - id: SKILL-022
+    name: task-decomposition
+    description: 需求拆解、任务优先级排序、依赖分析
+    priority: P0
+    agent_id: AGENT-006
+    related_technologies:
+      - 敏捷方法论
+      - WBS
+    examples:
+      - 拆分开发任务
+      - 优先级排序
+      - 依赖关系管理
+
+  - id: SKILL-023
+    name: docker-compose
+    description: 本地开发环境容器化、多服务编排
+    priority: P1
+    agent_id: AGENT-006
+    related_technologies:
+      - Docker
+      - docker-compose
+      - Docker SDK
+    examples:
+      - 编写 docker-compose.yml
+      - 多容器编排
+      - 开发环境搭建
+
+  - id: SKILL-024
+    name: ci-cd-pipeline
+    description: GitHub Actions/GitLab CI 流水线配置
+    priority: P1
+    agent_id: AGENT-006
+    related_technologies:
+      - GitHub Actions
+      - GitLab CI
+      - Jenkins
+    examples:
+      - 配置 CI 流水线
+      - 自动化测试
+      - 自动部署
+
+  - id: SKILL-025
+    name: environment-setup
+    description: Python/Node 环境管理、依赖安装
+    priority: P1
+    agent_id: AGENT-006
+    related_technologies:
+      - pyenv
+      - virtualenv
+      - nvm
+    examples:
+      - 配置开发环境
+      - 管理 Python 版本
+      - 安装项目依赖
+
+  # AI/ML Video Analysis Specialist Skills
+  - id: SKILL-026
+    name: ultralytics-yolo
+    description: YOLO 模型加载、推理、批量处理
+    priority: P0
+    agent_id: AGENT-007
+    related_technologies:
+      - ultralytics
+      - YOLOv8
+    examples:
+      - 加载 YOLO 模型
+      - 执行批量推理
+      - 处理检测结果
+
+  - id: SKILL-027
+    name: model-pool-management
+    description: 模型实例池设计、GPU 资源分配
+    priority: P0
+    agent_id: AGENT-007
+    related_technologies:
+      - multiprocessing
+      - CUDA
+      - GPUtil
+    examples:
+      - 设计实例池架构
+      - 分配 GPU 资源
+      - 管理实例生命周期
+
+  - id: SKILL-028
+    name: multi-model-pipeline
+    description: 多模型并行/串联推理架构
+    priority: P1
+    agent_id: AGENT-007
+    related_technologies:
+      - SAM3
+      - YOLO
+    examples:
+      - 设计并行推理
+      - 实现模型串联
+      - 结果融合
+
+  - id: SKILL-029
+    name: gpu-optimization
+    description: CUDA 优化、批处理、显存管理
+    priority: P1
+    agent_id: AGENT-007
+    related_technologies:
+      - CUDA
+      - PyTorch
+      - TensorRT
+    examples:
+      - 优化推理速度
+      - 显存管理
+      - 批处理优化
+
+# ============================================================================
+# SKILL 依赖关系
+# ============================================================================
+
+skill_dependencies:
+  fastapi-expert:
+    depends_on: []
+    enables:
+      - api-testing
+
+  python-multiprocessing:
+    depends_on:
+      - async-python
+    enables:
+      - model-pool-management
+      - model-inference-testing
+
+  gstreamer-expert:
+    depends_on:
+      - gi-python-bindings
+    enables:
+      - video-processing
+
+  video-processing:
+    depends_on:
+      - opencv-numpy
+    enables:
+      - performance-testing
+
+  react-18-advanced:
+    depends_on:
+      - typescript-expert
+    enables:
+      - video-player-integration
+
+  pytest-master:
+    depends_on:
+      - python-testing
+      - api-testing
+    enables:
+      - e2e-testing
+      - performance-testing

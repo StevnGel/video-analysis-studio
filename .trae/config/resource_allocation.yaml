@@ -1,0 +1,402 @@
+# 资源投入配置文件
+# 用于持续优化和配置管理
+# 格式: YAML
+
+version: "1.0.0"
+project: video-analysis-studio
+last_updated: "2026-04-16"
+
+# ============================================================================
+# 分阶段资源分配
+# ============================================================================
+
+phase_allocation:
+
+  phase_1:
+    name: 项目初始化
+    duration: 1周
+    description: 创建项目目录结构、配置开发环境、搭建 FastAPI 基础框架
+    agents:
+      - agent_id: AGENT-006
+        name: Project Manager & DevOps
+        allocation: 0.40
+        tasks:
+          - 环境搭建
+          - Docker 配置
+          - 项目结构初始化
+          - CI/CD 流水线初始配置
+      - agent_id: AGENT-001
+        name: Backend API Developer
+        allocation: 0.30
+        tasks:
+          - FastAPI 项目初始化
+          - 目录结构创建
+          - 基础依赖配置
+      - agent_id: AGENT-003
+        name: GStreamer Pipeline Engineer
+        allocation: 0.30
+        tasks:
+          - GStreamer 环境调研
+          - Pipeline 配置方案设计
+    deliverables:
+      - 项目目录结构
+      - Docker 开发环境
+      - FastAPI 基础框架
+      - GStreamer 环境就绪
+
+  phase_2:
+    name: 核心功能实现
+    duration: 3周
+    description: 配置系统、模型模块、Pipeline 模块、视频处理模块、任务执行模块
+    agents:
+      - agent_id: AGENT-001
+        name: Backend API Developer
+        allocation: 0.40
+        tasks:
+          - 实现 ConfigLoader
+          - 编写 app.yaml 配置
+          - 实现 VideoModel 基类
+          - 实现 YOLOModel
+          - 实现 ModelManager
+          - 实现 TaskExecutor
+          - 任务状态管理
+      - agent_id: AGENT-003
+        name: GStreamer Pipeline Engineer
+        allocation: 0.35
+        tasks:
+          - 实现 PipelineConfig
+          - 实现 PipelineRegistry
+          - 配置预定义 Pipeline
+          - 实现 VideoProcessor
+          - appsink 帧提取
+          - appsrc 帧输出
+          - 绘制检测框
+      - agent_id: AGENT-007
+        name: AI/ML Video Analysis Specialist
+        allocation: 0.25
+        tasks:
+          - 模型实例池设计
+          - GPU 资源调度
+          - 批量推理优化
+          - 多模型架构设计
+    deliverables:
+      - 配置加载器
+      - 模型模块
+      - Pipeline 模块
+      - 视频处理模块
+      - 任务执行模块
+
+  phase_3:
+    name: API 开发
+    duration: 1周
+    description: 视频源 API、模型 API、任务 API、输出 API
+    agents:
+      - agent_id: AGENT-001
+        name: Backend API Developer
+        allocation: 0.50
+        tasks:
+          - 视频源 API (/api/v1/videos/*)
+          - 模型 API (/api/v1/models/*)
+          - 任务 API (/api/v1/tasks/*)
+          - 输出 API (/api/v1/tasks/{id}/output)
+          - 推理 API (/api/v1/inferences/*)
+          - API 文档同步
+      - agent_id: AGENT-004
+        name: QA Testing & Validation
+        allocation: 0.30
+        tasks:
+          - API 端点测试
+          - 集成测试框架搭建
+          - 回归测试用例编写
+      - agent_id: AGENT-002
+        name: Frontend React Developer
+        allocation: 0.20
+        tasks:
+          - API 服务层开发
+          - 前端类型定义
+          - API 联调准备
+    deliverables:
+      - 所有 API 端点
+      - API 测试用例
+      - OpenAPI 文档
+      - 前端 API 服务层
+
+  phase_4:
+    name: 前端实现
+    duration: 2周
+    description: 视频上传页、任务创建页、任务监控页、视频播放
+    agents:
+      - agent_id: AGENT-002
+        name: Frontend React Developer
+        allocation: 0.60
+        tasks:
+          - 视频上传页面
+          - 任务创建页面（3步引导）
+          - 任务监控页面
+          - 模型管理页面
+          - 视频播放器集成
+          - 样式和动画实现
+      - agent_id: AGENT-001
+        name: Backend API Developer
+        allocation: 0.25
+        tasks:
+          - SSE 实时推送
+          - 前端联调支持
+          - 性能优化
+      - agent_id: AGENT-004
+        name: QA Testing & Validation
+        allocation: 0.15
+        tasks:
+          - 前端组件测试
+          - E2E 测试用例
+          - UI 验收
+    deliverables:
+      - 视频上传页
+      - 任务创建页
+      - 任务监控页
+      - 模型管理页
+      - 视频播放器
+
+  phase_5:
+    name: 测试和优化
+    duration: 1周
+    description: 单元测试、集成测试、端到端测试、性能优化
+    agents:
+      - agent_id: AGENT-004
+        name: QA Testing & Validation
+        allocation: 0.40
+        tasks:
+          - 单元测试完善
+          - 集成测试
+          - 端到端测试
+          - 性能基准测试
+          - 验收测试
+      - agent_id: AGENT-007
+        name: AI/ML Video Analysis Specialist
+        allocation: 0.30
+        tasks:
+          - GPU 性能优化
+          - 推理延迟优化
+          - 批量处理优化
+          - 显存管理优化
+      - agent_id: AGENT-001
+        name: Backend API Developer
+        allocation: 0.15
+        tasks:
+          - 后端性能优化
+          - 错误处理完善
+          - 代码审查
+      - agent_id: AGENT-002
+        name: Frontend React Developer
+        allocation: 0.15
+        tasks:
+          - 前端性能优化
+          - 响应式优化
+          - 最终验收
+    deliverables:
+      - 测试报告
+      - 性能报告
+      - 验收清单通过
+      - 优化后的系统
+
+# ============================================================================
+# 优先级矩阵
+# ============================================================================
+
+priority_matrix:
+  P0:
+    agents:
+      - agent_id: AGENT-001
+        name: Backend API Developer
+        reason: 后端是核心链路基础
+        resource_level: 高
+      - agent_id: AGENT-003
+        name: GStreamer Pipeline Engineer
+        reason: GStreamer 集成是主要技术风险
+        resource_level: 高
+      - agent_id: AGENT-004
+        name: QA Testing & Validation
+        reason: 保障质量，减少返工
+        resource_level: 中
+
+  P1:
+    agents:
+      - agent_id: AGENT-002
+        name: Frontend React Developer
+        reason: 前端开发工作量大
+        resource_level: 高
+      - agent_id: AGENT-007
+        name: AI/ML Video Analysis Specialist
+        reason: 模型集成直接影响产品价值
+        resource_level: 中
+
+  P2:
+    agents:
+      - agent_id: AGENT-005
+        name: Technical Documentation
+        reason: 可复用通用工具
+        resource_level: 低
+      - agent_id: AGENT-006
+        name: Project Manager & DevOps
+        reason: 视团队规模决定
+        resource_level: 低
+
+# ============================================================================
+# 技能优先级配置
+# ============================================================================
+
+skill_priority:
+  P0_skills:
+    - SKILL-001   # fastapi-expert
+    - SKILL-002   # python-multiprocessing
+    - SKILL-005   # react-18-advanced
+    - SKILL-006   # typescript-expert
+    - SKILL-008   # video-player-integration
+    - SKILL-009   # gstreamer-expert
+    - SKILL-010   # video-processing
+    - SKILL-011   # opencv-numpy
+    - SKILL-013   # pytest-master
+    - SKILL-014   # api-testing
+    - SKILL-017   # model-inference-testing
+    - SKILL-018   # openapi-generator
+    - SKILL-022   # task-decomposition
+    - SKILL-026   # ultralytics-yolo
+    - SKILL-027   # model-pool-management
+
+  P1_skills:
+    - SKILL-003   # async-python
+    - SKILL-004   # python-testing
+    - SKILL-007   # tailwind-css
+    - SKILL-012   # gi-python-bindings
+    - SKILL-015   # e2e-testing
+    - SKILL-016   # performance-testing
+    - SKILL-019   # mdoc-gen
+    - SKILL-023   # docker-compose
+    - SKILL-024   # ci-cd-pipeline
+    - SKILL-025   # environment-setup
+    - SKILL-028   # multi-model-pipeline
+    - SKILL-029   # gpu-optimization
+
+  P2_skills:
+    - SKILL-020   # changelog-manager
+    - SKILL-021   # readme-automation
+
+# ============================================================================
+# 性能指标配置
+# ============================================================================
+
+performance_metrics:
+  agent_task_completion:
+    target: 0.90
+    description: Agent 任务完成率
+    measurement: 成功任务数/总任务数
+
+  code_review_pass_rate:
+    target: 0.85
+    description: 代码审查通过率
+    measurement: 一次通过数/总审查数
+
+  unit_test_coverage:
+    target: 0.80
+    description: 单元测试覆盖率
+    measurement: 阶段五结束时
+
+  api_doc_sync_rate:
+    target: 1.00
+    description: API 文档同步率
+    measurement: 与代码同步
+
+  pipeline_execution_success:
+    target: 0.95
+    description: Pipeline 执行成功率
+    measurement: 成功执行数/总执行数
+
+  gpu_utilization:
+    target: 0.80
+    description: GPU 利用率
+    measurement: 推理时 GPU 利用率
+
+  inference_latency:
+    target: 100
+    description: 单帧推理延迟 (ms)
+    measurement: 1080P 单帧推理延迟
+
+# ============================================================================
+# 优化周期配置
+# ============================================================================
+
+optimization_cycles:
+  weekly:
+    content: Agent 性能评估
+    owner: Project Manager
+    output: 周度性能报告
+
+  phase_end:
+    content: Skill 配置调整
+    owner: 全员评审
+    output: 配置更新提案
+
+  version_release:
+    content: 配置文档更新
+    owner: Technical Documentation Agent
+    output: 更新的配置文件
+
+# ============================================================================
+# 安全与治理配置
+# ============================================================================
+
+security:
+  code_review:
+    required_for:
+      - AGENT-001
+      - AGENT-002
+      - AGENT-003
+      - AGENT-007
+    optional_for:
+      - AGENT-004
+      - AGENT-005
+      - AGENT-006
+
+  environment:
+    isolation: container
+    readonly_paths:
+      - .trae/documents/
+    readwrite_paths:
+      - backend/src/
+      - frontend/src/
+      - config/
+
+  audit:
+    enabled: true
+    log_path: .trae/logs/agent_audit.log
+    retention_days: 30
+
+# ============================================================================
+# 工具链集成配置
+# ============================================================================
+
+toolchain_integration:
+  trae_ide:
+    mode: agent_runtime
+    containerized: true
+
+  git:
+    branch_strategy: feature/agent-{agent_id}
+    review_required: true
+    auto_merge: false
+    protected_branches:
+      - main
+      - develop
+
+  fastapi:
+    auto_generate_docs: true
+    openapi_output: .trae/documents/v1.0/openapi.yaml
+
+  react_vite:
+    hot_reload: true
+    auto_lint: true
+    lint_on_save: true
+
+  gstreamer:
+    pre_defined_pipelines_only: true
+    config_file: config/app.yaml
