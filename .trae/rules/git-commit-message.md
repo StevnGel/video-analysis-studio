@@ -1,8 +1,8 @@
 ---
-alwaysApply: true
+alwaysApply: false
+description: 提交信息规范
 scene: git_message
 ---
-
 # Git 提交信息规范
 
 ## 1. 提交信息格式

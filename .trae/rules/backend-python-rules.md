@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
+description: Python 后端开发规则
 ---
 # Python 后端开发规则
 

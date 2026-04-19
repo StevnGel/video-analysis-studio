@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 前端 TypeScript 开发规则
+---
 # 前端 TypeScript 开发规则
 
 ## 代码风格
