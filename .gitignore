@@ -240,9 +240,7 @@ __marimo__/
 *.m4a
 
 # Uploaded media directories
-data/videos/
-data/images/
-data/uploads/
+data/
 backend/src/data/
 
 # Docker

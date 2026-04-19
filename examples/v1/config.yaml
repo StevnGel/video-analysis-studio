@@ -1,0 +1,21 @@
+video:
+    input_path: /Users/zengwenhua/py_workspace/video-analysis-studio/data/videos/traffic_video_6.mp4
+    frame_interval: 5
+
+yolo:
+    model_path: /Users/zengwenhua/py_workspace/video-analysis-studio/data/weights/yolov8n.pt
+    classes:
+        - car
+    confidence_threshold: 0.25
+
+rtmp:
+    host: 192.168.2.138
+    port: 1935
+    stream_key: live/stream
+
+gstreamer:
+    video_width: 1920
+    video_height: 1080
+    fps: 30
+    video_codec: h264
+    bitrate: 2000000
