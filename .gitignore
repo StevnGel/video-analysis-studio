@@ -247,3 +247,5 @@ backend/src/data/
 
 # Docker
 docker/
+docs/commands.md
+docs/ffmpeg-log.md
