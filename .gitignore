@@ -244,3 +244,6 @@ data/videos/
 data/images/
 data/uploads/
 backend/src/data/
+
+# Docker
+docker/
