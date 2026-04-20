@@ -1,8 +1,7 @@
 ---
-alwaysApply: false
-description: Python 后端开发规则
+alwaysApply: true
 ---
-# Python 后端开发规则
+# Python 代码开发和运行规则
 
 ## 代码风格
 
