@@ -1,6 +1,7 @@
 video:
     input_path: /Users/zengwenhua/py_workspace/video-analysis-studio/data/videos/traffic_video_6.mp4
     frame_interval: 5
+    fps: 25
 
 yolo:
     model_path: /Users/zengwenhua/py_workspace/video-analysis-studio/data/weights/yolov8n.pt
