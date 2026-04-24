@@ -1,5 +1,6 @@
 video:
     input_path: /Users/zengwenhua/py_workspace/video-analysis-studio/data/videos/traffic_video_6.mp4
+    output_path: /Users/zengwenhua/py_workspace/video-analysis-studio/data/output/output_video.flv
     frame_interval: 5
     fps: 25
 

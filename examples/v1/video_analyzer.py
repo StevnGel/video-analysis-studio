@@ -88,6 +88,11 @@ class VideoAnalyzer:
     def _on_appsink_new_sample(self, appsink: GstApp.AppSink) -> Gst.FlowReturn:
         sample = appsink.pull_sample()
         if sample is None:
+            self.is_eos = True
+            if self.appsrc:
+                self.appsrc.emit("end-of-stream")
+            if self.main_loop:
+                self.main_loop.quit()
             return Gst.FlowReturn.EOS
 
         buf = sample.get_buffer()
@@ -145,10 +150,13 @@ class VideoAnalyzer:
 
     def _build_pipeline(self):
         video_path = self.config["video"]["input_path"]
-        rtmp_url = (
-            f"rtmp://{self.config['rtmp']['host']}:"
-            f"{self.config['rtmp']['port']}/{self.config['rtmp']['stream_key']}"
-        )
+        output_path = self.config["video"]["output_path"]
+        
+        # 确保输出目录存在
+        output_dir = os.path.dirname(output_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            logger.info(f"Created output directory: {output_dir}")
 
         decode_pipeline_str = (
             f"filesrc location={video_path} ! "
@@ -167,8 +175,8 @@ class VideoAnalyzer:
             f"x264enc bitrate={self.config['gstreamer']['bitrate'] // 1000} "
             f"speed-preset=ultrafast tune=zerolatency ! "
             f"video/x-h264,profile=baseline ! "
-            f"flvmux name=mux ! "
-            f"rtmpsink location={rtmp_url}"
+            f"flvmux ! "
+            f"filesink location={output_path}"
         )
         logger.info(f"Encode pipeline: {encode_pipeline_str}")
 
@@ -181,6 +189,7 @@ class VideoAnalyzer:
         self.appsrc = encode_pipeline.get_by_name("src")
         self.appsrc.set_property("format", Gst.Format.TIME)
         self.appsrc.set_property("is-live", True)
+        self.appsrc.set_property("block", True)
         self.appsrc.connect("need-data", self._on_appsrc_need_data)
         self.appsrc.connect("enough-data", self._on_appsrc_enough_data)
         self.appsrc.connect("seek-data", self._on_appsrc_seek_data)
