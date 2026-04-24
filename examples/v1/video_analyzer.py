@@ -13,7 +13,8 @@ from ultralytics import YOLO
 
 import gi
 gi.require_version("Gst", "1.0")
-from gi.repository import Gst, GLib, GObject
+gi.require_version("GstApp", "1.0")
+from gi.repository import Gst, GstApp, GLib, GObject
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,8 +32,8 @@ class VideoAnalyzer:
         self.car_class_id = 2
 
         self.pipeline: Optional[Gst.Pipeline] = None
-        self.appsink: Optional[Gst.AppSink] = None
-        self.appsrc: Optional[Gst.AppSrc] = None
+        self.appsink: Optional[GstApp.AppSink] = None
+        self.appsrc: Optional[GstApp.AppSrc] = None
 
         self.video_width = self.config["gstreamer"]["video_width"]
         self.video_height = self.config["gstreamer"]["video_height"]
@@ -84,7 +85,7 @@ class VideoAnalyzer:
                 )
         return annotated_frame
 
-    def _on_appsink_new_sample(self, appsink: Gst.AppSink) -> Gst.FlowReturn:
+    def _on_appsink_new_sample(self, appsink: GstApp.AppSink) -> Gst.FlowReturn:
         sample = appsink.pull_sample()
         if sample is None:
             return Gst.FlowReturn.EOS
@@ -133,13 +134,13 @@ class VideoAnalyzer:
         if appsrc_buf != Gst.FlowReturn.OK:
             logger.warning(f"push-buffer returned: {appsrc_buf}")
 
-    def _on_appsrc_need_data(self, appsrc: Gst.AppSrc, _):
+    def _on_appsrc_need_data(self, appsrc: GstApp.AppSrc, _):
         pass
 
-    def _on_appsrc_enough_data(self, appsrc: Gst.AppSrc):
+    def _on_appsrc_enough_data(self, appsrc: GstApp.AppSrc):
         pass
 
-    def _on_appsrc_seek_data(self, appsrc: Gst.AppSrc, segment_type: Gst.Format):
+    def _on_appsrc_seek_data(self, appsrc: GstApp.AppSrc, segment_type: Gst.Format):
         return True
 
     def _build_pipeline(self):
@@ -164,7 +165,7 @@ class VideoAnalyzer:
             f"videoconvert ! "
             f"video/x-raw,format=I420 ! "
             f"x264enc bitrate={self.config['gstreamer']['bitrate'] // 1000} "
-            f"speedpreset=ultrafast tune=zerolatency ! "
+            f"speed-preset=ultrafast tune=zerolatency ! "
             f"video/x-h264,profile=baseline ! "
             f"flvmux name=mux ! "
             f"rtmpsink location={rtmp_url}"
@@ -215,7 +216,7 @@ class VideoAnalyzer:
 
 
 def main():
-    config_path = Path(__file__).parent.parent / "config.yaml"
+    config_path = Path(__file__).parent / "config.yaml"
     analyzer = VideoAnalyzer(str(config_path))
     analyzer.run()
 
